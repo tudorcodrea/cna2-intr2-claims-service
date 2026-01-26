@@ -1,0 +1,231 @@
+package com.example.claims.repository;
+
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
+
+import com.example.claims.model.Claim;
+import com.example.claims.model.ClaimSummary;
+import com.example.claims.model.CreateClaimRequest;
+
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
+import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.lambda.model.InvokeResponse;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+
+@Repository
+public class ClaimsRepositoryImpl implements ClaimsRepository {
+
+    private final DynamoDbClient dynamoDbClient;
+    private final S3Client s3Client;
+    private final LambdaClient lambdaClient;
+    private final String s3BucketName;
+    private final String summarizerLambdaName;
+    private final String generateFilesLambdaName;
+
+    @Autowired
+    public ClaimsRepositoryImpl(DynamoDbClient dynamoDbClient, S3Client s3Client, LambdaClient lambdaClient,
+                               @Value("${aws.s3.bucket-name}") String s3BucketName,
+                               @Value("${aws.lambda.function-name}") String summarizerLambdaName,
+                               @Value("${aws.lambda.generate-files-function-name}") String generateFilesLambdaName) {
+        this.dynamoDbClient = dynamoDbClient;
+        this.s3Client = s3Client;
+        this.lambdaClient = lambdaClient;
+        this.s3BucketName = s3BucketName;
+        this.summarizerLambdaName = summarizerLambdaName;
+        this.generateFilesLambdaName = generateFilesLambdaName;
+    }
+
+    @Override
+    public Claim findById(String claimId) {
+        GetItemRequest request = GetItemRequest.builder()
+                .tableName("claims")
+                .key(Map.of("claimId", AttributeValue.builder().s(claimId).build()))
+                .build();
+
+        GetItemResponse response = dynamoDbClient.getItem(request);
+        if (response.hasItem()) {
+            return mapToClaim(response.item());
+        }
+        return null;
+    }
+
+    @Override
+    public ClaimSummary generateSummary(Claim claim) {
+        // Prepare payload for Lambda with only claim details
+        String payload = String.format(
+            "{\"claimId\": \"%s\", \"description\": \"%s\", \"status\": \"%s\", \"customerId\": \"%s\"}",
+            claim.getClaimId(),
+            claim.getDescription(),
+            claim.getStatus(),
+            claim.getCustomerId()
+        );
+
+        // Invoke Lambda function
+        InvokeRequest invokeRequest = InvokeRequest.builder()
+                .functionName(summarizerLambdaName)
+                .payload(SdkBytes.fromUtf8String(payload))
+                .build();
+
+        InvokeResponse invokeResponse = lambdaClient.invoke(invokeRequest);
+
+        // Parse response
+        String responsePayload = invokeResponse.payload().asUtf8String();
+
+        // Parse the JSON response to extract summaries
+        ClaimSummary.Summaries summaries = parseSummariesFromResponse(responsePayload);
+
+        return new ClaimSummary(
+            claim.getClaimId(),
+            summaries,
+            java.time.LocalDateTime.now(),
+            "anthropic.claude-3-sonnet-20240229-v1:0"
+        );
+    }
+
+    @Override
+    public void generateClaimFiles(Claim claim) {
+        // Get claim notes from S3
+        String notesContent = getClaimNotesFromS3(claim.getClaimId());
+
+        // Prepare payload for Lambda with claim data and notes
+        String payload = String.format(
+            "{\"claimId\": \"%s\", \"claimData\": {\"claimId\": \"%s\", \"status\": \"%s\", \"customerId\": \"%s\", \"description\": \"%s\"}, \"notes\": \"%s\"}",
+            claim.getClaimId(),
+            claim.getClaimId(),
+            claim.getStatus(),
+            claim.getCustomerId(),
+            claim.getDescription(),
+            notesContent
+        );
+
+        // Invoke Lambda function
+        InvokeRequest invokeRequest = InvokeRequest.builder()
+                .functionName(generateFilesLambdaName)
+                .payload(SdkBytes.fromUtf8String(payload))
+                .build();
+
+        // Invoke asynchronously - don't wait for response
+        lambdaClient.invoke(invokeRequest);
+    }
+
+    private String getClaimNotesFromS3(String claimId) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(s3BucketName)
+                    .key(claimId + "/notes.txt")
+                    .build();
+
+            return s3Client.getObjectAsBytes(request).asString(StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "No additional notes available.";
+        }
+    }
+
+    private ClaimSummary.Summaries parseSummariesFromResponse(String responsePayload) {
+        // Simple JSON parsing - extract values from the response
+        // Expected format: {"claimId":"...", "summaries":{"overall":"...", "customer":"...", "adjuster":"...", "recommendation":"..."}, "generatedAt":"...", "modelUsed":"..."}
+
+        ClaimSummary.Summaries summaries = new ClaimSummary.Summaries();
+
+        try {
+            // Extract overall summary
+            summaries.setOverall(extractJsonValue(responsePayload, "overall"));
+
+            // Extract customer summary
+            summaries.setCustomer(extractJsonValue(responsePayload, "customer"));
+
+            // Extract adjuster summary
+            summaries.setAdjuster(extractJsonValue(responsePayload, "adjuster"));
+
+            // Extract recommendation
+            summaries.setRecommendation(extractJsonValue(responsePayload, "recommendation"));
+        } catch (Exception e) {
+            // Fallback if parsing fails
+            summaries.setOverall("Summary generation failed");
+            summaries.setCustomer("Summary generation failed");
+            summaries.setAdjuster("Summary generation failed");
+            summaries.setRecommendation("UNKNOWN");
+        }
+
+        return summaries;
+    }
+
+    private String extractJsonValue(String json, String key) {
+        String searchKey = "\"" + key + "\": \"";
+        int start = json.indexOf(searchKey);
+        if (start == -1) return "Not available";
+
+        start += searchKey.length();
+        int end = json.indexOf("\"", start);
+        if (end == -1) return "Not available";
+
+        return json.substring(start, end);
+    }
+
+    private Claim mapToClaim(Map<String, AttributeValue> item) {
+        List<String> notes = new ArrayList<>();
+        if (item.containsKey("notes") && item.get("notes").l() != null) {
+            for (AttributeValue noteValue : item.get("notes").l()) {
+                notes.add(noteValue.s());
+            }
+        }
+
+        return new Claim(
+            item.get("claimId").s(),
+            item.get("customerId").s(),
+            item.get("status").s(),
+            item.get("description").s(),
+            LocalDateTime.parse(item.get("createdDate").s(), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            LocalDateTime.parse(item.get("updatedDate").s(), DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            notes,
+            Double.parseDouble(item.get("amount").n())
+        );
+    }
+
+    @Override
+    public Claim save(CreateClaimRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+
+        PutItemRequest putItemRequest = PutItemRequest.builder()
+                .tableName("claims")
+                .item(Map.of(
+                    "claimId", AttributeValue.builder().s(request.getClaimId()).build(),
+                    "customerId", AttributeValue.builder().s(request.getCustomerId()).build(),
+                    "status", AttributeValue.builder().s(request.getStatus()).build(),
+                    "description", AttributeValue.builder().s(request.getDescription()).build(),
+                    "amount", AttributeValue.builder().n(String.valueOf(request.getAmount())).build(),
+                    "createdDate", AttributeValue.builder().s(now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)).build(),
+                    "updatedDate", AttributeValue.builder().s(now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)).build()
+                ))
+                .build();
+
+        dynamoDbClient.putItem(putItemRequest);
+
+        // Return the created claim
+        return new Claim(
+            request.getClaimId(),
+            request.getCustomerId(),
+            request.getStatus(),
+            request.getDescription(),
+            now,
+            now,
+            new ArrayList<>(), // Empty notes list for new claims
+            request.getAmount()
+        );
+    }
+}
