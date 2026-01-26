@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'pom.xml'
-      - 'Dockerfile'
-      - 'k8s-deployment.yaml'
   pull_request:
     branches:
       - main
@@ -16,7 +11,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: claims-service
-  EKS_CLUSTER_NAME: introspect2-eks-cluster  # Update with actual cluster name from Terraform
+  EKS_CLUSTER_NAME: introspect2-eks  # From Terraform: ${var.cluster_name}-eks
 
 jobs:
   build-and-deploy:
