@@ -36,6 +36,7 @@ metadata:
     app: claims-service
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: alb
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: /actuator/health
 spec:
   selector:
     app: claims-service
