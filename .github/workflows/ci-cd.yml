@@ -65,6 +65,6 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         sed -i "s|<ECR_REPOSITORY_URL>|$ECR_REGISTRY/$ECR_REPOSITORY|g" k8s-deployment.yaml
-        sed -i "s|<IMAGE_TAG>|$IMAGE_TAG|g" k8s-deployment.yaml
+        sed -i "s|<IMAGE_TAG>|:$IMAGE_TAG|g" k8s-deployment.yaml
         kubectl apply -f k8s-deployment.yaml
         kubectl rollout status deployment/claims-service

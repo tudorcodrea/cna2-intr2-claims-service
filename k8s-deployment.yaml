@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: claims-service
-        image: <ECR_REPOSITORY_URL>:<IMAGE_TAG>
+        image: <ECR_REPOSITORY_URL><IMAGE_TAG>
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
