@@ -34,10 +34,12 @@ metadata:
   name: claims-service
   labels:
     app: claims-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: alb
 spec:
   selector:
     app: claims-service
   ports:
-  - port: 8080
+  - port: 80
     targetPort: 8080
   type: LoadBalancer
