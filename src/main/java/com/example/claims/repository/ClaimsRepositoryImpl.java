@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -29,6 +31,8 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 @Repository
 public class ClaimsRepositoryImpl implements ClaimsRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClaimsRepositoryImpl.class);
 
     private final DynamoDbClient dynamoDbClient;
     private final S3Client s3Client;
@@ -113,18 +117,31 @@ public class ClaimsRepositoryImpl implements ClaimsRepository {
             notesContent
         );
 
-        // Invoke Lambda function
-        InvokeRequest invokeRequest = InvokeRequest.builder()
-                .functionName(generateFilesLambdaName)
-                .payload(SdkBytes.fromUtf8String(payload))
-                .build();
+        logger.info("Invoking generate-files Lambda {} with payload: {}", generateFilesLambdaName, payload);
 
-        // Invoke asynchronously - don't wait for response
-        lambdaClient.invoke(invokeRequest);
+        // Invoke Lambda function and surface errors so we can see why S3 files were not produced
+        InvokeRequest invokeRequest = InvokeRequest.builder()
+            .functionName(generateFilesLambdaName)
+            .payload(SdkBytes.fromUtf8String(payload))
+            .build();
+
+        InvokeResponse response = lambdaClient.invoke(invokeRequest);
+
+        String responsePayload = response.payload() != null ? response.payload().asUtf8String() : "<no payload>";
+
+        if (response.functionError() != null) {
+            // Bubble up Lambda failure details for visibility during local runs
+            String err = "Lambda generate-files failed: " + response.functionError() + " payload=" + responsePayload;
+            logger.error(err);
+            throw new RuntimeException(err);
+        }
+
+        logger.info("Lambda generate-files success. Status code {} payload: {}", response.statusCode(), responsePayload);
     }
 
     private String getClaimNotesFromS3(String claimId) {
         try {
+            logger.info("Fetching notes from S3 bucket '{}' key '{}'/notes.txt", s3BucketName, claimId);
             GetObjectRequest request = GetObjectRequest.builder()
                     .bucket(s3BucketName)
                     .key(claimId + "/notes.txt")
@@ -132,6 +149,7 @@ public class ClaimsRepositoryImpl implements ClaimsRepository {
 
             return s3Client.getObjectAsBytes(request).asString(StandardCharsets.UTF_8);
         } catch (Exception e) {
+            logger.warn("No notes found for claim '{}' in bucket '{}': {}", claimId, s3BucketName, e.getMessage());
             return "No additional notes available.";
         }
     }

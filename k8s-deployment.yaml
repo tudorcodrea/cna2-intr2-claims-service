@@ -6,6 +6,8 @@ metadata:
     app: claims-service
 spec:
   replicas: 2
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: claims-service
@@ -16,7 +18,7 @@ spec:
     spec:
       containers:
       - name: claims-service
-        image: <ECR_REPOSITORY_URL>:<IMAGE_TAG>
+        image: 660633971866.dkr.ecr.us-east-1.amazonaws.com/claims-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
