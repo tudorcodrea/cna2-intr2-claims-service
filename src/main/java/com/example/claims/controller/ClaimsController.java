@@ -27,6 +27,11 @@ public class ClaimsController {
         this.claimsService = claimsService;
     }
 
+    @GetMapping("/")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
+
     @GetMapping("/{claimId}")
     public ResponseEntity<Claim> getClaim(@PathVariable String claimId) {
         try {
