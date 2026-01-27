@@ -35,9 +35,8 @@ metadata:
   labels:
     app: claims-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: alb
     service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: /
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-target: "HTTP:80/"
 spec:
   selector:
     app: claims-service
