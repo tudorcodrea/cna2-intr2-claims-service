@@ -119,29 +119,34 @@ public class ClaimsRepositoryImpl implements ClaimsRepository {
 
         logger.info("Invoking generate-files Lambda {} with payload: {}", generateFilesLambdaName, payload);
 
-        // Invoke Lambda function and surface errors so we can see why S3 files were not produced
-        InvokeRequest invokeRequest = InvokeRequest.builder()
-            .functionName(generateFilesLambdaName)
-            .payload(SdkBytes.fromUtf8String(payload))
-            .build();
-
-        InvokeResponse response = lambdaClient.invoke(invokeRequest);
-
-        String responsePayload = "<no payload>";
         try {
-            responsePayload = response.payload() != null ? response.payload().asUtf8String() : "<no payload>";
+            // Invoke Lambda function and surface errors so we can see why S3 files were not produced
+            InvokeRequest invokeRequest = InvokeRequest.builder()
+                .functionName(generateFilesLambdaName)
+                .payload(SdkBytes.fromUtf8String(payload))
+                .build();
+
+            InvokeResponse response = lambdaClient.invoke(invokeRequest);
+
+            String responsePayload = "<no payload>";
+            try {
+                responsePayload = response.payload() != null ? response.payload().asUtf8String() : "<no payload>";
+            } catch (Exception e) {
+                logger.warn("Failed to read response payload: {}", e.getMessage());
+            }
+
+            if (response.functionError() != null) {
+                // Bubble up Lambda failure details for visibility during local runs
+                String err = "Lambda generate-files failed: " + response.functionError() + " payload=" + responsePayload;
+                logger.error(err);
+                throw new RuntimeException(err);
+            }
+
+            logger.info("Lambda generate-files success. Status code {} payload: {}", response.statusCode(), responsePayload);
         } catch (Exception e) {
-            logger.warn("Failed to read response payload: {}", e.getMessage());
+            logger.error("Failed to invoke Lambda function {}: {}", generateFilesLambdaName, e.getMessage(), e);
+            throw new RuntimeException("Lambda invocation failed: " + e.getMessage(), e);
         }
-
-        if (response.functionError() != null) {
-            // Bubble up Lambda failure details for visibility during local runs
-            String err = "Lambda generate-files failed: " + response.functionError() + " payload=" + responsePayload;
-            logger.error(err);
-            throw new RuntimeException(err);
-        }
-
-        logger.info("Lambda generate-files success. Status code {} payload: {}", response.statusCode(), responsePayload);
     }
 
     private String getClaimNotesFromS3(String claimId) {
