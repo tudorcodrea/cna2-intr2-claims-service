@@ -171,17 +171,17 @@ public class ClaimsRepositoryImpl implements ClaimsRepository {
         ClaimSummary.Summaries summaries = new ClaimSummary.Summaries();
 
         try {
-            // Extract overall summary
-            summaries.setOverall(extractJsonValue(responsePayload, "overall"));
+            // Extract overall summary from summaries object
+            summaries.setOverall(extractJsonValue(responsePayload, "summaries", "overall"));
 
-            // Extract customer summary
-            summaries.setCustomer(extractJsonValue(responsePayload, "customer"));
+            // Extract customer summary from summaries object
+            summaries.setCustomer(extractJsonValue(responsePayload, "summaries", "customer"));
 
-            // Extract adjuster summary
-            summaries.setAdjuster(extractJsonValue(responsePayload, "adjuster"));
+            // Extract adjuster summary from summaries object
+            summaries.setAdjuster(extractJsonValue(responsePayload, "summaries", "adjuster"));
 
-            // Extract recommendation
-            summaries.setRecommendation(extractJsonValue(responsePayload, "recommendation"));
+            // Extract recommendation from summaries object
+            summaries.setRecommendation(extractJsonValue(responsePayload, "summaries", "recommendation"));
         } catch (Exception e) {
             // Fallback if parsing fails
             summaries.setOverall("Summary generation failed");
@@ -193,16 +193,29 @@ public class ClaimsRepositoryImpl implements ClaimsRepository {
         return summaries;
     }
 
-    private String extractJsonValue(String json, String key) {
-        String searchKey = "\"" + key + "\": \"";
-        int start = json.indexOf(searchKey);
-        if (start == -1) return "Not available";
+    private String extractJsonValue(String json, String parentKey, String childKey) {
+        // First find the parent object
+        String parentSearchKey = "\"" + parentKey + "\": {";
+        int parentStart = json.indexOf(parentSearchKey);
+        if (parentStart == -1) return "Not available";
 
-        start += searchKey.length();
-        int end = json.indexOf("\"", start);
-        if (end == -1) return "Not available";
+        // Find the end of the parent object
+        int parentEnd = json.indexOf("}", parentStart);
+        if (parentEnd == -1) return "Not available";
 
-        return json.substring(start, end);
+        // Extract the parent object content
+        String parentContent = json.substring(parentStart + parentSearchKey.length(), parentEnd);
+
+        // Now find the child key within the parent content
+        String childSearchKey = "\"" + childKey + "\": \"";
+        int childStart = parentContent.indexOf(childSearchKey);
+        if (childStart == -1) return "Not available";
+
+        childStart += childSearchKey.length();
+        int childEnd = parentContent.indexOf("\"", childStart);
+        if (childEnd == -1) return "Not available";
+
+        return parentContent.substring(childStart, childEnd);
     }
 
     private Claim mapToClaim(Map<String, AttributeValue> item) {
