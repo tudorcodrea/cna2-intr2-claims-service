@@ -127,7 +127,12 @@ public class ClaimsRepositoryImpl implements ClaimsRepository {
 
         InvokeResponse response = lambdaClient.invoke(invokeRequest);
 
-        String responsePayload = response.payload() != null ? response.payload().asUtf8String() : "<no payload>";
+        String responsePayload = "<no payload>";
+        try {
+            responsePayload = response.payload() != null ? response.payload().asUtf8String() : "<no payload>";
+        } catch (Exception e) {
+            logger.warn("Failed to read response payload: {}", e.getMessage());
+        }
 
         if (response.functionError() != null) {
             // Bubble up Lambda failure details for visibility during local runs
