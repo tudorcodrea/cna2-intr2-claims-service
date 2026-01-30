@@ -20,7 +20,11 @@ public class ClaimsServiceImpl implements ClaimsService {
 
     @Override
     public Claim getClaim(String claimId) {
-        return claimsRepository.findById(claimId);
+        Claim claim = claimsRepository.findById(claimId);
+        if (claim == null) {
+            throw new RuntimeException("Claim not found: " + claimId);
+        }
+        return claim;
     }
 
     @Override
