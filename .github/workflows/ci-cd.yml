@@ -10,8 +10,8 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: claims-service
-  EKS_CLUSTER_NAME: introspect2-eks  # From Terraform: ${var.cluster_name}-eks
+  ECR_REPOSITORY: introspect2-claims
+  EKS_CLUSTER_NAME: introspect2-eks  # From Terraform: ${var.cluster_name}
 
 jobs:
   build-and-deploy:
@@ -43,6 +43,11 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+
+    - name: Ensure ECR repository exists
+      run: |
+        aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "$ECR_REPOSITORY" --image-scanning-configuration scanOnPush=true
 
     - name: Login to Amazon ECR
       id: login-ecr
