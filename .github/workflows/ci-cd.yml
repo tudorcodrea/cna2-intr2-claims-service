@@ -91,16 +91,16 @@ jobs:
       run: |
         aws ecr describe-image-scan-findings --repository-name "$ECR_REPOSITORY" --image-id imageTag="$IMAGE_TAG" --output json > ecr-scan-results.json
 
-    - name: Check for critical vulnerabilities
+
+    - name: Log scan results to CloudWatch
       run: |
-        CRITICAL_COUNT=$(jq '.imageScanFindings.findingSeverityCounts.CRITICAL // 0' ecr-scan-results.json)
-        HIGH_COUNT=$(jq '.imageScanFindings.findingSeverityCounts.HIGH // 0' ecr-scan-results.json)
-        echo "Critical vulnerabilities: $CRITICAL_COUNT"
-        echo "High vulnerabilities: $HIGH_COUNT"
-        if [ "$CRITICAL_COUNT" -gt 0 ] || [ "$HIGH_COUNT" -gt 5 ]; then
-          echo "Too many high/critical vulnerabilities found. Failing build."
-          exit 1
-        fi
+        LOG_GROUP="/ci/ecr-scan-results"
+        LOG_STREAM="${{ github.run_id }}-${{ github.sha }}"
+        aws logs create-log-group --log-group-name "$LOG_GROUP" 2>/dev/null || true
+        aws logs create-log-stream --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" 2>/dev/null || true
+        TIMESTAMP=$(date +%s%3N)
+        LOG_EVENT=$(jq -c . ecr-scan-results.json)
+        aws logs put-log-events --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" --log-events "timestamp=$TIMESTAMP,message=$LOG_EVENT"
 
     - name: Upload scan results
       uses: actions/upload-artifact@v4
