@@ -32,8 +32,8 @@
         </ConstantThroughputTimer>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="1. Health Check (GET /api/v1/claims/)">
-          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.domain">f7f4atjhqf.execute-api.us-east-1.amazonaws.com/prod</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -56,8 +56,8 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="2. Create Claim (POST /api/v1/claims)">
-          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.domain">f7f4atjhqf.execute-api.us-east-1.amazonaws.com/prod</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -106,8 +106,8 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="3. Get Claim (GET /api/v1/claims/${claimId})">
-          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.domain">f7f4atjhqf.execute-api.us-east-1.amazonaws.com/prod</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/${claimId}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -131,8 +131,8 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="5. Generate Claim Files (POST /api/v1/claims/${claimId}/generate)">
-          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.domain">f7f4atjhqf.execute-api.us-east-1.amazonaws.com/prod</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/${claimId}/generate</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -171,8 +171,8 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="4. Summarize Claim (POST /api/v1/claims/${claimId}/summarize)">
-          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
-          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.domain">f7f4atjhqf.execute-api.us-east-1.amazonaws.com/prod</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/${claimId}/summarize</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
