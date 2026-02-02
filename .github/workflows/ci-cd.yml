@@ -71,6 +71,8 @@ jobs:
       run: |
         IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
         echo "Waiting for ECR scan on $IMAGE_URI"
+        echo "Sleeping 30 seconds to allow scan to register..."
+        sleep 30
         for i in {1..30}; do
           SCAN_STATUS=$(aws ecr describe-image-scan-findings --repository-name "$ECR_REPOSITORY" --image-id imageTag="$IMAGE_TAG" --query 'imageScanStatus.status' --output text 2>/dev/null || echo "FAILED")
           if [ "$SCAN_STATUS" = "COMPLETE" ]; then
