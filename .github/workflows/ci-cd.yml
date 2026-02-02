@@ -46,8 +46,13 @@ jobs:
 
     - name: Ensure ECR repository exists
       run: |
-        aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 || \
+        if aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1; then
+          echo "Repository exists, ensuring scan on push is enabled"
+          aws ecr put-image-scanning-configuration --repository-name "$ECR_REPOSITORY" --image-scanning-configuration scanOnPush=true
+        else
+          echo "Creating repository with scan on push enabled"
           aws ecr create-repository --repository-name "$ECR_REPOSITORY" --image-scanning-configuration scanOnPush=true
+        fi
 
     - name: Login to Amazon ECR
       id: login-ecr
