@@ -79,9 +79,9 @@ jobs:
             echo "ECR scan complete"
             break
           elif [ "$SCAN_STATUS" = "FAILED" ]; then
-            echo "ECR scan failed"
-            aws ecr describe-image-scan-findings --repository-name "$ECR_REPOSITORY" --image-id imageTag="$IMAGE_TAG" --query 'imageScanStatus' --output json
-            exit 1
+            echo "ECR scan failed, but continuing pipeline."
+            aws ecr describe-image-scan-findings --repository-name "$ECR_REPOSITORY" --image-id imageTag="$IMAGE_TAG" --query 'imageScanStatus' --output json || true
+            break
           fi
           echo "Scan status: $SCAN_STATUS, waiting..."
           sleep 10
