@@ -93,14 +93,15 @@ jobs:
 
 
     - name: Log scan results to CloudWatch
+      continue-on-error: true
       run: |
         LOG_GROUP="/ci/ecr-scan-results"
         LOG_STREAM="${{ github.run_id }}-${{ github.sha }}"
         aws logs create-log-group --log-group-name "$LOG_GROUP" 2>/dev/null || true
         aws logs create-log-stream --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" 2>/dev/null || true
         TIMESTAMP=$(date +%s%3N)
-        LOG_EVENT=$(jq -c . ecr-scan-results.json)
-        aws logs put-log-events --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" --log-events "timestamp=$TIMESTAMP,message=$LOG_EVENT"
+        LOG_EVENT=$(jq -c . ecr-scan-results.json 2>/dev/null || echo '{"error":"Failed to parse JSON"}')
+        aws logs put-log-events --log-group-name "$LOG_GROUP" --log-stream-name "$LOG_STREAM" --log-events "timestamp=$TIMESTAMP,message=$LOG_EVENT" 2>/dev/null || echo "Failed to log to CloudWatch"
 
     - name: Upload scan results
       uses: actions/upload-artifact@v4
