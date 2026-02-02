@@ -9,7 +9,7 @@
     </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Dynamic Load Thread Group">
-        <intProp name="ThreadGroup.num_threads">20</intProp>
+        <intProp name="ThreadGroup.num_threads">50</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <longProp name="ThreadGroup.duration">120</longProp>
         <longProp name="ThreadGroup.delay">0</longProp>
@@ -32,7 +32,7 @@
         </ConstantThroughputTimer>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="1. Health Check (GET /api/v1/claims/)">
-          <stringProp name="HTTPSampler.domain">a163a96921dd24d8984b2f7dc356f3ff-1178733739.us-east-1.elb.amazonaws.com</stringProp>
+          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/</stringProp>
@@ -56,7 +56,7 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="2. Create Claim (POST /api/v1/claims)">
-          <stringProp name="HTTPSampler.domain">a163a96921dd24d8984b2f7dc356f3ff-1178733739.us-east-1.elb.amazonaws.com</stringProp>
+          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims</stringProp>
@@ -106,7 +106,7 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="3. Get Claim (GET /api/v1/claims/${claimId})">
-          <stringProp name="HTTPSampler.domain">a163a96921dd24d8984b2f7dc356f3ff-1178733739.us-east-1.elb.amazonaws.com</stringProp>
+          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/${claimId}</stringProp>
@@ -131,7 +131,7 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="5. Generate Claim Files (POST /api/v1/claims/${claimId}/generate)">
-          <stringProp name="HTTPSampler.domain">a163a96921dd24d8984b2f7dc356f3ff-1178733739.us-east-1.elb.amazonaws.com</stringProp>
+          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/${claimId}/generate</stringProp>
@@ -171,7 +171,7 @@
           <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="4. Summarize Claim (POST /api/v1/claims/${claimId}/summarize)">
-          <stringProp name="HTTPSampler.domain">a163a96921dd24d8984b2f7dc356f3ff-1178733739.us-east-1.elb.amazonaws.com</stringProp>
+          <stringProp name="HTTPSampler.domain">a841c067574ca46629418fbd37b7d2a1-492892219.us-east-1.elb.amazonaws.com</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/claims/${claimId}/summarize</stringProp>

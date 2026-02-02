@@ -16,7 +16,6 @@ spec:
       labels:
         app: claims-service
     spec:
-      serviceAccountName: claims-service-sa
       containers:
       - name: claims-service
         image: <ECR_REPOSITORY_URL><IMAGE_TAG>
@@ -51,14 +50,6 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: claims-service-sa
-  namespace: default
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::660633971866:role/claims-service-role
 ---
 apiVersion: v1
 kind: Service
