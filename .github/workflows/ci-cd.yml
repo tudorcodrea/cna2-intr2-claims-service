@@ -12,6 +12,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: introspect2-claims
   EKS_CLUSTER_NAME: introspect2-eks  # From Terraform: ${var.cluster_name}
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build-and-deploy:
